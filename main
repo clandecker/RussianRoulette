@@ -1,0 +1,61 @@
+players: public(DynArray[address, 100])
+losers:  public(DynArray[address, 100])
+odds: public(uint256)
+playersTurn: public(uint256)
+creator: public(address)
+
+@external
+def __init__(contractCreator: address):
+    self.creator=contractCreator #is it self or coinbase
+    self.playersTurn=0
+    
+
+@internal
+def setOdds(oneInThisMany: uint256):
+    if msg.sender==self.creator:
+        self.odds=oneInThisMany
+
+@external
+def addPlayer(player: address):
+    for addr in self.losers:
+        assert addr!=player
+    for addr in self.players:
+        assert addr!=player
+    self.players.append(player)
+
+@internal
+def lose(player: address):
+    self.players=[]
+    self.losers.append(player)
+
+@internal
+def random()-> uint256:
+    assert self.odds>0
+    ogNumber: uint256=block.number
+    if ogNumber%12457<self.odds:
+        return ogNumber%12457+1
+    elif ogNumber%19<self.odds:
+        return ogNumber%19+1
+    elif ogNumber%105<self.odds:
+        return ogNumber%105+1
+    elif ogNumber%22<self.odds:
+        return ogNumber%22+1
+    if ogNumber%13<self.odds:
+        return ogNumber%13+1
+    else:
+        return 1
+
+@external
+def play():
+    if self.random()==1:
+        self.lose(self.players[self.playersTurn])
+    else:
+        temp: uint256=self.playersTurn+1
+        self.playersTurn=temp
+
+@external
+def isALoser(player: address) -> bool:
+    for addr in self.losers:
+        if addr==player:
+            return True
+    return False
